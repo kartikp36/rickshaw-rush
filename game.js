@@ -16,6 +16,7 @@ let score = 0;
 let bestScore = localStorage.getItem('rickshawRushBestScore') || 0;
 let lastTime = 0;
 let gameSpeed = 20; // Units per second in 3D
+let nextSpeedMilestone = 500; // Boost speed at 500, 1000, 1500, etc.
 let animationId = null;
 
 // Power-up States
@@ -503,7 +504,7 @@ class Obstacle {
 
 let obstacles = [];
 let obstacleSpawnTimer = 0;
-let obstacleSpawnInterval = 1.5;
+let obstacleSpawnInterval = 2.5;
 
 // Shared Geometries and Materials for Collectibles
 // Coin
@@ -783,8 +784,8 @@ function update(deltaTime) {
     
     // Spawn obstacles
     obstacleSpawnTimer += deltaTime;
-    obstacleSpawnInterval = Math.max(0.4, 1.5 - (gameSpeed - 20) / 40); // Faster spawns as speed increases
-    
+    obstacleSpawnInterval = Math.max(0.6, 2.5 - (gameSpeed - 20) / 30); // Slower initial spawns, gentle increase
+
     // Spawn Collectibles
     collectibleSpawnTimer += deltaTime;
     if (collectibleSpawnTimer >= collectibleSpawnInterval) {
@@ -831,13 +832,20 @@ function update(deltaTime) {
     }
     score += scoreGain;
 
+    // Milestone speed burst
+    if (score >= nextSpeedMilestone) {
+        gameSpeed += 5; // Sudden burst of speed
+        nextSpeedMilestone += 500;
+        showFloatingText('SPEED UP!', player.mesh.position);
+    }
+
     // Display power-up status if active
     let statusText = `Score: ${Math.floor(score)}`;
     if (invincibilityTimer > 0) {
-        statusText += ` | Chai: ${Math.ceil(invincibilityTimer)}s`;
+        statusText += ` | Chai (Invincible & Smash): ${Math.ceil(invincibilityTimer)}s`;
     }
     if (multiplierTimer > 0) {
-        statusText += ` | Music: ${Math.ceil(multiplierTimer)}s`;
+        statusText += ` | Music (2x Score while Vibing!): ${Math.ceil(multiplierTimer)}s`;
     }
     scoreDisplay.textContent = statusText;
 
@@ -855,11 +863,11 @@ function update(deltaTime) {
                 playScoreSound();
                 showFloatingText(`+${coinValue} OTP`, col.mesh.position);
             } else if (col.type === 'chai') {
-                invincibilityTimer = 5.0; // 5 seconds of invincibility
+                invincibilityTimer = 10.0; // 10 seconds of invincibility
                 playScoreSound();
                 showFloatingText('CHAI TIME!', col.mesh.position);
             } else if (col.type === 'music') {
-                multiplierTimer = 5.0; // 5 seconds of 2x multiplier
+                multiplierTimer = 10.0; // 10 seconds of 2x multiplier
                 playScoreSound();
                 showFloatingText('VIBING (2x)!', col.mesh.position);
             }
@@ -972,6 +980,7 @@ function startGame() {
     gameState = 'PLAYING';
     score = 0;
     gameSpeed = 20;
+    nextSpeedMilestone = 500;
     invincibilityTimer = 0;
     multiplierTimer = 0;
     nearMissContainer.innerHTML = '';
