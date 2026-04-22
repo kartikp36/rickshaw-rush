@@ -29,9 +29,9 @@ scene.background = new THREE.Color(0x87CEEB); // Sky blue
 scene.fog = new THREE.Fog(0x87CEEB, 20, 100);
 
 const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-// Position camera slightly behind and above player
-camera.position.set(0, 7, 12);
-camera.lookAt(0, 0, -20);
+// Position camera lower and closer to see wheels better
+camera.position.set(0, 5, 10);
+camera.lookAt(0, 1, -20);
 
 const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -39,11 +39,12 @@ renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = THREE.PCFSoftShadowMap;
 
 // Lighting
-const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+const ambientLight = new THREE.AmbientLight(0xffffff, 0.7); // Slightly brighter ambient
 scene.add(ambientLight);
 
 const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-dirLight.position.set(-10, 20, 10);
+// Move light slightly to the side to create better highlights on wheels
+dirLight.position.set(-15, 20, 15);
 dirLight.castShadow = true;
 dirLight.shadow.camera.top = 50;
 dirLight.shadow.camera.bottom = -50;
@@ -156,22 +157,61 @@ class Player {
         roof.castShadow = true;
         this.mesh.add(roof);
         
-        // Wheels (Black)
-        const wheelGeo = new THREE.CylinderGeometry(0.3, 0.3, 0.2, 16);
+        // Windshield (Light Blue)
+        const glassGeo = new THREE.BoxGeometry(this.width * 0.8, 0.6, 0.05);
+        const glassMat = new THREE.MeshStandardMaterial({ color: 0x87CEEB, transparent: true, opacity: 0.7 });
+        const windshield = new THREE.Mesh(glassGeo, glassMat);
+        windshield.position.set(0, 1.4, 0.2);
+        windshield.rotation.x = -0.1;
+        this.mesh.add(windshield);
+        
+        // Headlight (White)
+        const lightGeo = new THREE.CylinderGeometry(0.15, 0.15, 0.1, 16);
+        const lightMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+        lightGeo.rotateX(Math.PI / 2);
+        const headlight = new THREE.Mesh(lightGeo, lightMat);
+        headlight.position.set(0, 0.6, 1.25);
+        this.mesh.add(headlight);
+        
+        // Wheels (Black with white rim)
+        const wheelRadius = 0.4;
+        const wheelGeo = new THREE.CylinderGeometry(wheelRadius, wheelRadius, 0.25, 16);
         const wheelMat = new THREE.MeshStandardMaterial({ color: 0x222222 });
         wheelGeo.rotateZ(Math.PI / 2);
         
-        const frontWheel = new THREE.Mesh(wheelGeo, wheelMat);
-        frontWheel.position.set(0, 0.3, 0.8);
+        const rimGeo = new THREE.CylinderGeometry(wheelRadius * 0.5, wheelRadius * 0.5, 0.26, 16);
+        const rimMat = new THREE.MeshStandardMaterial({ color: 0xdddddd });
+        rimGeo.rotateZ(Math.PI / 2);
+        
+        // Front Wheel
+        const frontWheel = new THREE.Group();
+        frontWheel.add(new THREE.Mesh(wheelGeo, wheelMat));
+        frontWheel.add(new THREE.Mesh(rimGeo, rimMat));
+        frontWheel.position.set(0, wheelRadius, 1.0);
         this.mesh.add(frontWheel);
         
-        const rearLeftWheel = new THREE.Mesh(wheelGeo, wheelMat);
-        rearLeftWheel.position.set(-this.width/2 + 0.1, 0.3, -0.8);
+        // Rear Left Wheel
+        const rearLeftWheel = new THREE.Group();
+        rearLeftWheel.add(new THREE.Mesh(wheelGeo, wheelMat));
+        rearLeftWheel.add(new THREE.Mesh(rimGeo, rimMat));
+        // Push slightly outside the body to be more visible
+        rearLeftWheel.position.set(-this.width/2 - 0.05, wheelRadius, -0.8);
         this.mesh.add(rearLeftWheel);
         
-        const rearRightWheel = new THREE.Mesh(wheelGeo, wheelMat);
-        rearRightWheel.position.set(this.width/2 - 0.1, 0.3, -0.8);
+        // Rear Right Wheel
+        const rearRightWheel = new THREE.Group();
+        rearRightWheel.add(new THREE.Mesh(wheelGeo, wheelMat));
+        rearRightWheel.add(new THREE.Mesh(rimGeo, rimMat));
+        // Push slightly outside the body to be more visible
+        rearRightWheel.position.set(this.width/2 + 0.05, wheelRadius, -0.8);
         this.mesh.add(rearRightWheel);
+        
+        // Lift chassis slightly above wheels
+        base.position.y = wheelRadius + 0.2;
+        cab.position.y = base.position.y + 0.85;
+        roof.position.y = cab.position.y + 0.65;
+        windshield.position.y = cab.position.y;
+        headlight.position.y = base.position.y + 0.1;
         
         // Position player on road
         this.mesh.position.set(this.targetX, 0, 0);
@@ -245,30 +285,191 @@ class Obstacle {
         
         const xPos = (this.lane - 1) * LANE_WIDTH;
         
+        // Wheel geometries for reuse
+        const wheelRadius = 0.35;
+        const wheelGeo = new THREE.CylinderGeometry(wheelRadius, wheelRadius, 0.2, 16);
+        wheelGeo.rotateZ(Math.PI / 2);
+        const wheelMat = new THREE.MeshStandardMaterial({ color: 0x111111 });
+        
+        const rimGeo = new THREE.CylinderGeometry(wheelRadius * 0.5, wheelRadius * 0.5, 0.22, 16);
+        rimGeo.rotateZ(Math.PI / 2);
+        const rimMat = new THREE.MeshStandardMaterial({ color: 0x999999 });
+
+        function createWheel() {
+            const w = new THREE.Group();
+            w.add(new THREE.Mesh(wheelGeo, wheelMat));
+            w.add(new THREE.Mesh(rimGeo, rimMat));
+            return w;
+        }
+
         if (type === 'car') {
             this.speedMultiplier = 0.8;
-            const geo = new THREE.BoxGeometry(1.6, 1.2, 3);
+            const width = 1.6;
+            const height = 1.2;
+            const depth = 3;
+            
             const mat = new THREE.MeshStandardMaterial({ color: 0xe74c3c });
-            const body = new THREE.Mesh(geo, mat);
-            body.position.y = 0.6;
-            body.castShadow = true;
-            this.mesh.add(body);
+            
+            // Lower body
+            const lowerGeo = new THREE.BoxGeometry(width, height * 0.5, depth);
+            const lowerBody = new THREE.Mesh(lowerGeo, mat);
+            lowerBody.position.y = wheelRadius + height * 0.25;
+            lowerBody.castShadow = true;
+            this.mesh.add(lowerBody);
+            
+            // Cabin
+            const cabGeo = new THREE.BoxGeometry(width * 0.9, height * 0.5, depth * 0.5);
+            const cabBody = new THREE.Mesh(cabGeo, mat);
+            cabBody.position.set(0, wheelRadius + height * 0.75, -depth * 0.1);
+            cabBody.castShadow = true;
+            this.mesh.add(cabBody);
+            
+            // Windows
+            const winMat = new THREE.MeshStandardMaterial({ color: 0x333333, roughness: 0.2 });
+            const windshield = new THREE.Mesh(new THREE.BoxGeometry(width * 0.8, height * 0.4, 0.05), winMat);
+            windshield.position.set(0, wheelRadius + height * 0.75, depth * 0.16);
+            this.mesh.add(windshield);
+            
+            // Headlights
+            const lightGeo = new THREE.BoxGeometry(0.3, 0.2, 0.05);
+            const lightMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+            const leftLight = new THREE.Mesh(lightGeo, lightMat);
+            leftLight.position.set(-width/2 + 0.25, wheelRadius + height * 0.25, depth/2 + 0.01);
+            this.mesh.add(leftLight);
+            
+            const rightLight = new THREE.Mesh(lightGeo, lightMat);
+            rightLight.position.set(width/2 - 0.25, wheelRadius + height * 0.25, depth/2 + 0.01);
+            this.mesh.add(rightLight);
+
+            // Wheels (4)
+            const wheelOffsets = [
+                [-width/2, depth/2 - 0.5], [width/2, depth/2 - 0.5],
+                [-width/2, -depth/2 + 0.5], [width/2, -depth/2 + 0.5]
+            ];
+            wheelOffsets.forEach(pos => {
+                const w = createWheel();
+                w.position.set(pos[0], wheelRadius, pos[1]);
+                this.mesh.add(w);
+            });
+            
         } else if (type === 'truck') {
             this.speedMultiplier = 0.6;
-            const geo = new THREE.BoxGeometry(2, 2.5, 5);
-            const mat = new THREE.MeshStandardMaterial({ color: 0x3498db });
-            const body = new THREE.Mesh(geo, mat);
-            body.position.y = 1.25;
-            body.castShadow = true;
-            this.mesh.add(body);
+            const width = 2;
+            const height = 2.5;
+            const depth = 5;
+            
+            const cabMat = new THREE.MeshStandardMaterial({ color: 0x2c3e50 });
+            const boxMat = new THREE.MeshStandardMaterial({ color: 0x3498db });
+            
+            // Cab
+            const cabGeo = new THREE.BoxGeometry(width, height * 0.8, depth * 0.3);
+            const cab = new THREE.Mesh(cabGeo, cabMat);
+            cab.position.set(0, wheelRadius + height * 0.4, depth * 0.35);
+            cab.castShadow = true;
+            this.mesh.add(cab);
+            
+            // Cargo Box
+            const boxGeo = new THREE.BoxGeometry(width, height, depth * 0.7);
+            const cargo = new THREE.Mesh(boxGeo, boxMat);
+            cargo.position.set(0, wheelRadius + height * 0.5, -depth * 0.15);
+            cargo.castShadow = true;
+            this.mesh.add(cargo);
+            
+            // Windshield
+            const winMat = new THREE.MeshStandardMaterial({ color: 0x111111, roughness: 0.1 });
+            const windshield = new THREE.Mesh(new THREE.BoxGeometry(width * 0.9, height * 0.3, 0.05), winMat);
+            windshield.position.set(0, wheelRadius + height * 0.5, depth * 0.51);
+            this.mesh.add(windshield);
+            
+            // Headlights
+            const lightGeo = new THREE.BoxGeometry(0.4, 0.2, 0.05);
+            const lightMat = new THREE.MeshBasicMaterial({ color: 0xffaaaa }); // slight red tint
+            const leftLight = new THREE.Mesh(lightGeo, lightMat);
+            leftLight.position.set(-width/2 + 0.3, wheelRadius + 0.3, depth * 0.51);
+            this.mesh.add(leftLight);
+            
+            const rightLight = new THREE.Mesh(lightGeo, lightMat);
+            rightLight.position.set(width/2 - 0.3, wheelRadius + 0.3, depth * 0.51);
+            this.mesh.add(rightLight);
+            
+            // Wheels (6)
+            const wheelOffsets = [
+                [-width/2, depth * 0.35], [width/2, depth * 0.35], // Front
+                [-width/2, -depth * 0.1], [width/2, -depth * 0.1], // Middle
+                [-width/2, -depth * 0.4], [width/2, -depth * 0.4]  // Rear
+            ];
+            wheelOffsets.forEach(pos => {
+                const w = createWheel();
+                w.position.set(pos[0], wheelRadius, pos[1]);
+                this.mesh.add(w);
+            });
+            
         } else if (type === 'cow') {
             this.speedMultiplier = 0; // Static
-            const geo = new THREE.BoxGeometry(1, 1.5, 2);
-            const mat = new THREE.MeshStandardMaterial({ color: 0xecf0f1 });
-            const body = new THREE.Mesh(geo, mat);
-            body.position.y = 0.75;
+            const bodyMat = new THREE.MeshStandardMaterial({ color: 0xecf0f1 }); // White
+            const spotMat = new THREE.MeshStandardMaterial({ color: 0x111111 }); // Black spots/details
+            
+            // Main body
+            const bodyGeo = new THREE.BoxGeometry(0.8, 0.8, 1.6);
+            const body = new THREE.Mesh(bodyGeo, bodyMat);
+            body.position.y = 0.8;
             body.castShadow = true;
             this.mesh.add(body);
+            
+            // Spot on body
+            const spotGeo = new THREE.PlaneGeometry(0.5, 0.5);
+            const spot = new THREE.Mesh(spotGeo, spotMat);
+            spot.position.set(0.41, 0.8, 0.2); // Just outside right side
+            spot.rotation.y = Math.PI / 2;
+            this.mesh.add(spot);
+            
+            const spot2 = new THREE.Mesh(spotGeo, spotMat);
+            spot2.position.set(-0.41, 0.9, -0.3); // Just outside left side
+            spot2.rotation.y = -Math.PI / 2;
+            this.mesh.add(spot2);
+            
+            // Head
+            const headGeo = new THREE.BoxGeometry(0.5, 0.5, 0.6);
+            const head = new THREE.Mesh(headGeo, bodyMat);
+            head.position.set(0, 1.2, 0.9);
+            head.castShadow = true;
+            this.mesh.add(head);
+            
+            // Snout (black)
+            const snoutGeo = new THREE.BoxGeometry(0.4, 0.2, 0.1);
+            const snout = new THREE.Mesh(snoutGeo, spotMat);
+            snout.position.set(0, 1.1, 1.25);
+            this.mesh.add(snout);
+            
+            // Horns
+            const hornGeo = new THREE.CylinderGeometry(0.02, 0.05, 0.3);
+            const hornMat = new THREE.MeshStandardMaterial({ color: 0xdddddd });
+            
+            const leftHorn = new THREE.Mesh(hornGeo, hornMat);
+            leftHorn.position.set(-0.2, 1.5, 0.8);
+            leftHorn.rotation.z = -0.3;
+            leftHorn.rotation.x = -0.2;
+            this.mesh.add(leftHorn);
+            
+            const rightHorn = new THREE.Mesh(hornGeo, hornMat);
+            rightHorn.position.set(0.2, 1.5, 0.8);
+            rightHorn.rotation.z = 0.3;
+            rightHorn.rotation.x = -0.2;
+            this.mesh.add(rightHorn);
+            
+            // Legs (4)
+            const legGeo = new THREE.BoxGeometry(0.2, 0.6, 0.2);
+            const legOffsets = [
+                [-0.3, 0.3, 0.6], [0.3, 0.3, 0.6],   // Front
+                [-0.3, 0.3, -0.6], [0.3, 0.3, -0.6]  // Back
+            ];
+            
+            legOffsets.forEach(pos => {
+                const leg = new THREE.Mesh(legGeo, bodyMat);
+                leg.position.set(...pos);
+                leg.castShadow = true;
+                this.mesh.add(leg);
+            });
         }
         
         this.mesh.position.set(xPos, 0, -80); // Spawn far away
