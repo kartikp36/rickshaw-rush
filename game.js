@@ -18,6 +18,10 @@ let lastTime = 0;
 let gameSpeed = 20; // Units per second in 3D
 let animationId = null;
 
+// Power-up States
+let invincibilityTimer = 0;
+let multiplierTimer = 0;
+
 // Game Configuration
 const LANE_COUNT = 3; // 3 lanes for 3D is better visually
 const LANE_WIDTH = 4;
@@ -501,6 +505,147 @@ let obstacles = [];
 let obstacleSpawnTimer = 0;
 let obstacleSpawnInterval = 1.5;
 
+// Shared Geometries and Materials for Collectibles
+// Coin
+const coinCanvas = document.createElement('canvas');
+coinCanvas.width = 128;
+coinCanvas.height = 128;
+const ctx = coinCanvas.getContext('2d');
+ctx.fillStyle = '#f1c40f'; // Gold
+ctx.beginPath();
+ctx.arc(64, 64, 60, 0, Math.PI * 2);
+ctx.fill();
+ctx.strokeStyle = '#f39c12';
+ctx.lineWidth = 4;
+ctx.beginPath();
+ctx.arc(64, 64, 52, 0, Math.PI * 2);
+ctx.stroke();
+ctx.fillStyle = '#d35400';
+ctx.font = 'bold 40px Arial';
+ctx.textAlign = 'center';
+ctx.textBaseline = 'middle';
+ctx.fillText('OTP', 64, 64);
+const coinTex = new THREE.CanvasTexture(coinCanvas);
+const coinGeo = new THREE.CylinderGeometry(0.8, 0.8, 0.2, 32);
+coinGeo.rotateX(Math.PI / 2);
+const coinMat = new THREE.MeshStandardMaterial({
+    color: 0xf1c40f,
+    metalness: 0.2, // Lower metalness to prevent black appearance without env map
+    roughness: 0.4,
+    map: coinTex // Apply canvas texture
+});
+
+// Chai
+const cupGeo = new THREE.CylinderGeometry(0.4, 0.3, 0.6, 16);
+const cupMat = new THREE.MeshStandardMaterial({ color: 0xecf0f1 }); // White cup
+const liquidGeo = new THREE.CylinderGeometry(0.38, 0.38, 0.05, 16);
+const liquidMat = new THREE.MeshStandardMaterial({ color: 0xc39b77 }); // Tea color
+const handleGeo = new THREE.TorusGeometry(0.2, 0.05, 8, 16);
+const handleMat = new THREE.MeshStandardMaterial({ color: 0xecf0f1 });
+
+// Music
+const boxGeo = new THREE.BoxGeometry(0.8, 0.8, 0.8);
+const boxMat = new THREE.MeshStandardMaterial({ color: 0x9b59b6, metalness: 0.1 }); // Purple box
+const symbolGeo = new THREE.CylinderGeometry(0.1, 0.1, 0.9, 16);
+const symbolMat = new THREE.MeshBasicMaterial({ color: 0xffffff });
+
+
+// Collectibles Class
+class Collectible {
+    constructor(lane, type) {
+        this.lane = lane;
+        this.type = type; // 'coin', 'chai', 'music'
+        this.active = true;
+
+        this.mesh = new THREE.Group();
+        this.box = new THREE.Box3();
+
+        const xPos = (this.lane - 1) * LANE_WIDTH;
+
+        if (type === 'coin') {
+            const coinMesh = new THREE.Mesh(coinGeo, coinMat);
+            coinMesh.position.y = 1.0;
+            this.mesh.add(coinMesh);
+
+            // Animate coin spinning
+            this.updateRotation = (deltaTime) => {
+                coinMesh.rotation.y += deltaTime * 3;
+            };
+        } else if (type === 'chai') {
+            // Chai cup model
+            const cupGroup = new THREE.Group();
+
+            // Cup base
+            const cup = new THREE.Mesh(cupGeo, cupMat);
+            cup.position.y = 0.3;
+            cupGroup.add(cup);
+
+            // Chai liquid
+            const liquid = new THREE.Mesh(liquidGeo, liquidMat);
+            liquid.position.y = 0.58;
+            cupGroup.add(liquid);
+
+            // Handle
+            const handle = new THREE.Mesh(handleGeo, handleMat);
+            handle.position.set(0.4, 0.3, 0);
+            cupGroup.add(handle);
+
+            cupGroup.position.y = 0.5; // Float above ground
+            this.mesh.add(cupGroup);
+
+            this.updateRotation = (deltaTime) => {
+                cupGroup.rotation.y += deltaTime * 2;
+                cupGroup.position.y = 0.5 + Math.sin(Date.now() * 0.005) * 0.2; // Hover effect
+            };
+        } else if (type === 'music') {
+            // Music Box model
+            const box = new THREE.Mesh(boxGeo, boxMat);
+
+            // Add a simple symbol on faces
+            const symbol1 = new THREE.Mesh(symbolGeo, symbolMat);
+            symbol1.rotation.x = Math.PI / 2;
+            const symbol2 = new THREE.Mesh(symbolGeo, symbolMat);
+            symbol2.rotation.z = Math.PI / 2;
+            box.add(symbol1);
+            box.add(symbol2);
+
+            box.position.y = 0.8;
+            this.mesh.add(box);
+
+            this.updateRotation = (deltaTime) => {
+                box.rotation.x += deltaTime * 2;
+                box.rotation.y += deltaTime * 3;
+            };
+        }
+
+        this.mesh.position.set(xPos, 0, -80); // Spawn far away
+        scene.add(this.mesh);
+    }
+
+    update(deltaTime) {
+        this.mesh.position.z += gameSpeed * deltaTime;
+
+        if (this.updateRotation) {
+            this.updateRotation(deltaTime);
+        }
+
+        this.box.setFromObject(this.mesh);
+
+        // Deactivate if passed behind camera
+        if (this.mesh.position.z > 15) {
+            this.active = false;
+        }
+    }
+
+    destroy() {
+        scene.remove(this.mesh);
+    }
+}
+
+let collectibles = [];
+let collectibleSpawnTimer = 0;
+let collectibleSpawnInterval = 2.0;
+
 // 3D Particles
 let particles = [];
 class Particle {
@@ -552,6 +697,12 @@ function spawnExplosion(x, y, z) {
 
 let screenShakeTime = 0;
 
+// Helper for Sky color lerping to avoid creating new THREE.Color each frame
+const skyColor = new THREE.Color();
+const skyDay = new THREE.Color(0x87CEEB);
+const skySunset = new THREE.Color(0xff7e5f);
+const skyNight = new THREE.Color(0x0B1D3A);
+
 // Handle resizing
 function resizeCanvas() {
     const container = document.getElementById('game-container');
@@ -600,6 +751,24 @@ function gameLoop(timestamp) {
 }
 
 function update(deltaTime) {
+    // Update sky color based on game speed
+    // Speed starts at 20. Let's say max sky transition happens around speed 60.
+    const speedRatio = Math.min((gameSpeed - 20) / 40, 1.0);
+
+    // Day (0x87CEEB), Sunset (0xff7e5f), Night (0x0B1D3A)
+    if (speedRatio < 0.5) {
+        // Day to Sunset
+        const t = speedRatio / 0.5;
+        skyColor.lerpColors(skyDay, skySunset, t);
+    } else {
+        // Sunset to Night
+        const t = (speedRatio - 0.5) / 0.5;
+        skyColor.lerpColors(skySunset, skyNight, t);
+    }
+
+    scene.background = skyColor;
+    scene.fog.color = skyColor;
+
     // Animate road markers to give sense of speed
     markers.forEach(marker => {
         marker.position.z += gameSpeed * deltaTime;
@@ -616,6 +785,25 @@ function update(deltaTime) {
     obstacleSpawnTimer += deltaTime;
     obstacleSpawnInterval = Math.max(0.4, 1.5 - (gameSpeed - 20) / 40); // Faster spawns as speed increases
     
+    // Spawn Collectibles
+    collectibleSpawnTimer += deltaTime;
+    if (collectibleSpawnTimer >= collectibleSpawnInterval) {
+        collectibleSpawnTimer = 0;
+        // Randomize next spawn time a bit
+        collectibleSpawnInterval = 1.0 + Math.random() * 2.0;
+        const lane = Math.floor(Math.random() * LANE_COUNT);
+
+        let type = 'coin';
+        const rand = Math.random();
+        if (rand > 0.95) {
+            type = 'chai'; // Rare power-up
+        } else if (rand > 0.90) {
+            type = 'music'; // Rare power-up
+        }
+
+        collectibles.push(new Collectible(lane, type));
+    }
+
     if (obstacleSpawnTimer >= obstacleSpawnInterval) {
         obstacleSpawnTimer = 0;
         const lane = Math.floor(Math.random() * LANE_COUNT);
@@ -627,10 +815,62 @@ function update(deltaTime) {
         obstacles.push(new Obstacle(lane, type));
     }
     
+    // Update Power-up Timers
+    if (invincibilityTimer > 0) {
+        invincibilityTimer -= deltaTime;
+    }
+    if (multiplierTimer > 0) {
+        multiplierTimer -= deltaTime;
+    }
+
     // Increase game speed and score
     gameSpeed += deltaTime * 0.2; // Slowly increase
-    score += deltaTime * 10;
-    scoreDisplay.textContent = `Score: ${Math.floor(score)}`;
+    let scoreGain = deltaTime * 10;
+    if (multiplierTimer > 0) {
+        scoreGain *= 2; // Double score multiplier
+    }
+    score += scoreGain;
+
+    // Display power-up status if active
+    let statusText = `Score: ${Math.floor(score)}`;
+    if (invincibilityTimer > 0) {
+        statusText += ` | Chai: ${Math.ceil(invincibilityTimer)}s`;
+    }
+    if (multiplierTimer > 0) {
+        statusText += ` | Music: ${Math.ceil(multiplierTimer)}s`;
+    }
+    scoreDisplay.textContent = statusText;
+
+    // Update collectibles
+    for (let i = collectibles.length - 1; i >= 0; i--) {
+        const col = collectibles[i];
+        col.update(deltaTime);
+
+        // Collision Detection for collectibles
+        if (player.box.intersectsBox(col.box)) {
+            if (col.type === 'coin') {
+                let coinValue = 100;
+                if (multiplierTimer > 0) coinValue *= 2;
+                score += coinValue;
+                playScoreSound();
+                showFloatingText(`+${coinValue} OTP`, col.mesh.position);
+            } else if (col.type === 'chai') {
+                invincibilityTimer = 5.0; // 5 seconds of invincibility
+                playScoreSound();
+                showFloatingText('CHAI TIME!', col.mesh.position);
+            } else if (col.type === 'music') {
+                multiplierTimer = 5.0; // 5 seconds of 2x multiplier
+                playScoreSound();
+                showFloatingText('VIBING (2x)!', col.mesh.position);
+            }
+            col.active = false;
+        }
+
+        if (!col.active) {
+            col.destroy();
+            collectibles.splice(i, 1);
+        }
+    }
 
     // Update obstacles
     for (let i = obstacles.length - 1; i >= 0; i--) {
@@ -639,12 +879,20 @@ function update(deltaTime) {
         
         // Collision Detection using Three.js Box3
         if (player.box.intersectsBox(obs.box)) {
-            // Collision!
-            playCrashSound();
-            spawnExplosion(player.mesh.position.x, player.mesh.position.y + 1, player.mesh.position.z);
-            screenShakeTime = 0.5;
-            gameOver();
-            return;
+            if (invincibilityTimer > 0) {
+                // Smashed obstacle!
+                spawnExplosion(obs.mesh.position.x, obs.mesh.position.y + 1, obs.mesh.position.z);
+                obs.active = false;
+                score += 500;
+                showFloatingText('SMASH!', obs.mesh.position);
+            } else {
+                // Collision!
+                playCrashSound();
+                spawnExplosion(player.mesh.position.x, player.mesh.position.y + 1, player.mesh.position.z);
+                screenShakeTime = 0.5;
+                gameOver();
+                return;
+            }
         }
         
         // Near Miss Detection
@@ -668,19 +916,31 @@ function update(deltaTime) {
     }
 }
 
-function showNearMissText() {
+function showFloatingText(msg, position = null) {
     const text = document.createElement('div');
     text.className = 'near-miss-text';
-    text.innerText = 'Near Miss!';
+    text.innerText = msg;
     
-    // Position roughly near the middle top
-    text.style.left = '50%';
-    text.style.top = '30%';
-    text.style.transform = 'translate(-50%, 0)';
+    // Convert 3D position to 2D screen coordinates if provided
+    if (position) {
+        const vector = position.clone();
+        vector.project(camera);
+
+        const x = (vector.x * .5 + .5) * window.innerWidth;
+        const y = (vector.y * -.5 + .5) * window.innerHeight;
+
+        text.style.left = `${x}px`;
+        text.style.top = `${y}px`;
+        text.style.transform = 'translate(-50%, -100%)';
+    } else {
+        // Default middle
+        text.style.left = '50%';
+        text.style.top = '30%';
+        text.style.transform = 'translate(-50%, 0)';
+    }
     
     nearMissContainer.appendChild(text);
     
-    // Remove after animation finishes
     setTimeout(() => {
         if (text.parentNode === nearMissContainer) {
             nearMissContainer.removeChild(text);
@@ -688,11 +948,32 @@ function showNearMissText() {
     }, 1000);
 }
 
+function showNearMissText() {
+    showFloatingText('Near Miss!');
+}
+
+function gameOver() {
+    gameState = 'GAMEOVER';
+
+    const finalScore = Math.floor(score);
+    if (finalScore > bestScore) {
+        bestScore = finalScore;
+        localStorage.setItem('rickshawRushBestScore', bestScore);
+    }
+
+    hud.classList.add('hidden');
+    finalScoreDisplay.textContent = `Score: ${finalScore}`;
+    bestScoreDisplay.textContent = `Best: ${bestScore}`;
+    gameOverScreen.classList.remove('hidden');
+}
+
 function startGame() {
     initAudio();
     gameState = 'PLAYING';
     score = 0;
     gameSpeed = 20;
+    invincibilityTimer = 0;
+    multiplierTimer = 0;
     nearMissContainer.innerHTML = '';
     
     startScreen.classList.add('hidden');
@@ -706,6 +987,10 @@ function startGame() {
     obstacles = [];
     obstacleSpawnTimer = 0;
     
+    collectibles.forEach(col => col.destroy());
+    collectibles = [];
+    collectibleSpawnTimer = 0;
+
     particles.forEach(p => p.destroy());
     particles = [];
     screenShakeTime = 0;
