@@ -716,12 +716,6 @@ function spawnExplosion(x, y, z) {
 
 let screenShakeTime = 0;
 
-// Helper for Sky color lerping to avoid creating new THREE.Color each frame
-const skyColor = new THREE.Color();
-const skyDay = new THREE.Color(0x87CEEB);
-const skySunset = new THREE.Color(0xff7e5f);
-const skyNight = new THREE.Color(0x0B1D3A);
-
 // Handle resizing
 function resizeCanvas() {
     const container = document.getElementById('game-container');
@@ -783,24 +777,6 @@ function gameLoop(timestamp) {
 }
 
 function update(deltaTime) {
-    // Update sky color based on score to make it smooth and not jump during speed bursts
-    // Transition day to night over 1000 score
-    const scoreRatio = Math.min(score / 1000, 1.0);
-
-    // Day (0x87CEEB), Sunset (0xff7e5f), Night (0x0B1D3A)
-    if (scoreRatio < 0.5) {
-        // Day to Sunset
-        const t = scoreRatio / 0.5;
-        skyColor.lerpColors(skyDay, skySunset, t);
-    } else {
-        // Sunset to Night
-        const t = (scoreRatio - 0.5) / 0.5;
-        skyColor.lerpColors(skySunset, skyNight, t);
-    }
-
-    scene.background = skyColor;
-    scene.fog.color = skyColor;
-
     // Animate road markers to give sense of speed
     markers.forEach(marker => {
         marker.position.z += gameSpeed * deltaTime;
