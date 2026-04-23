@@ -136,3 +136,24 @@ canvas {
 .hidden {
     display: none !important;
 }
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+    .screen h1 {
+        font-size: 2rem;
+        margin-bottom: 15px;
+    }
+
+    .screen p {
+        font-size: 1.2rem;
+        margin-bottom: 8px;
+    }
+
+    #score-display {
+        font-size: 1.2rem;
+    }
+
+    .near-miss-text {
+        font-size: 1.2rem;
+    }
+}

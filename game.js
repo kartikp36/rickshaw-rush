@@ -712,6 +712,19 @@ function resizeCanvas() {
     
     renderer.setSize(width, height);
     camera.aspect = width / height;
+
+    // Adjust FOV to ensure lanes are visible on narrow screens (e.g., portrait mobile)
+    const baseAspect = 16 / 9; // Base aspect ratio
+    const baseFov = 60; // Base vertical FOV
+
+    if (camera.aspect < baseAspect) {
+        const cameraHeight = Math.tan((baseFov / 2) * (Math.PI / 180));
+        const newCameraHeight = cameraHeight * (baseAspect / camera.aspect);
+        camera.fov = Math.atan(newCameraHeight) * (180 / Math.PI) * 2;
+    } else {
+        camera.fov = baseFov;
+    }
+
     camera.updateProjectionMatrix();
 }
 window.addEventListener('resize', resizeCanvas);
