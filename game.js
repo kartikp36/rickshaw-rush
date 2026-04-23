@@ -16,7 +16,7 @@ let score = 0;
 let bestScore = localStorage.getItem('rickshawRushBestScore') || 0;
 let lastTime = 0;
 let gameSpeed = 20; // Units per second in 3D
-let nextSpeedMilestone = 500; // Boost speed at 500, 1000, 1500, etc.
+let nextSpeedMilestone = 100; // Boost speed at 100, 200, 300, etc.
 let animationId = null;
 
 // Power-up States
@@ -24,7 +24,7 @@ let invincibilityTimer = 0;
 let multiplierTimer = 0;
 
 // Game Configuration
-const LANE_COUNT = 3; // 3 lanes for 3D is better visually
+const LANE_COUNT = 4; // 4 lanes
 const LANE_WIDTH = 4;
 const ROAD_WIDTH = LANE_COUNT * LANE_WIDTH;
 
@@ -126,7 +126,7 @@ function playScoreSound() {}
 // Player Class (Rickshaw 3D)
 class Player {
     constructor() {
-        this.lane = 1; // Middle lane of 3 (0, 1, 2)
+        this.lane = 1; // Start in lane 1 (of 0, 1, 2, 3)
         this.targetX = this.getLaneX(this.lane);
         this.width = 1.5;
         this.height = 2;
@@ -224,8 +224,8 @@ class Player {
     }
     
     getLaneX(laneIndex) {
-        // lanes: 0, 1, 2. Map to world X coordinates.
-        return (laneIndex - 1) * LANE_WIDTH;
+        // lanes: 0, 1, 2, 3. Map to world X coordinates.
+        return (laneIndex - 1.5) * LANE_WIDTH;
     }
     
     move(direction) {
@@ -288,7 +288,7 @@ class Obstacle {
         this.mesh = new THREE.Group();
         this.box = new THREE.Box3();
         
-        const xPos = (this.lane - 1) * LANE_WIDTH;
+        const xPos = (this.lane - 1.5) * LANE_WIDTH;
         
         // Wheel geometries for reuse
         const wheelRadius = 0.35;
@@ -411,6 +411,8 @@ class Obstacle {
             
         } else if (type === 'cow') {
             this.speedMultiplier = 0; // Static
+            const cowGroup = new THREE.Group();
+
             const bodyMat = new THREE.MeshStandardMaterial({ color: 0xecf0f1 }); // White
             const spotMat = new THREE.MeshStandardMaterial({ color: 0x111111 }); // Black spots/details
             
@@ -419,32 +421,32 @@ class Obstacle {
             const body = new THREE.Mesh(bodyGeo, bodyMat);
             body.position.y = 0.8;
             body.castShadow = true;
-            this.mesh.add(body);
+            cowGroup.add(body);
             
             // Spot on body
             const spotGeo = new THREE.PlaneGeometry(0.5, 0.5);
             const spot = new THREE.Mesh(spotGeo, spotMat);
             spot.position.set(0.41, 0.8, 0.2); // Just outside right side
             spot.rotation.y = Math.PI / 2;
-            this.mesh.add(spot);
+            cowGroup.add(spot);
             
             const spot2 = new THREE.Mesh(spotGeo, spotMat);
             spot2.position.set(-0.41, 0.9, -0.3); // Just outside left side
             spot2.rotation.y = -Math.PI / 2;
-            this.mesh.add(spot2);
+            cowGroup.add(spot2);
             
             // Head
             const headGeo = new THREE.BoxGeometry(0.5, 0.5, 0.6);
             const head = new THREE.Mesh(headGeo, bodyMat);
             head.position.set(0, 1.2, 0.9);
             head.castShadow = true;
-            this.mesh.add(head);
+            cowGroup.add(head);
             
             // Snout (black)
             const snoutGeo = new THREE.BoxGeometry(0.4, 0.2, 0.1);
             const snout = new THREE.Mesh(snoutGeo, spotMat);
             snout.position.set(0, 1.1, 1.25);
-            this.mesh.add(snout);
+            cowGroup.add(snout);
             
             // Horns
             const hornGeo = new THREE.CylinderGeometry(0.02, 0.05, 0.3);
@@ -454,13 +456,13 @@ class Obstacle {
             leftHorn.position.set(-0.2, 1.5, 0.8);
             leftHorn.rotation.z = -0.3;
             leftHorn.rotation.x = -0.2;
-            this.mesh.add(leftHorn);
+            cowGroup.add(leftHorn);
             
             const rightHorn = new THREE.Mesh(hornGeo, hornMat);
             rightHorn.position.set(0.2, 1.5, 0.8);
             rightHorn.rotation.z = 0.3;
             rightHorn.rotation.x = -0.2;
-            this.mesh.add(rightHorn);
+            cowGroup.add(rightHorn);
             
             // Legs (4)
             const legGeo = new THREE.BoxGeometry(0.2, 0.6, 0.2);
@@ -473,18 +475,34 @@ class Obstacle {
                 const leg = new THREE.Mesh(legGeo, bodyMat);
                 leg.position.set(...pos);
                 leg.castShadow = true;
-                this.mesh.add(leg);
+                cowGroup.add(leg);
             });
+
+            // Rotate cow so it stands horizontally
+            cowGroup.rotation.y = Math.PI / 2;
+            this.mesh.add(cowGroup);
         }
         
+        // Rotate oncoming traffic (lanes 2 and 3)
+        if (this.lane >= 2 && this.type !== 'cow') {
+            this.mesh.rotation.y = Math.PI;
+        }
+
         this.mesh.position.set(xPos, 0, -80); // Spawn far away
         scene.add(this.mesh);
     }
     
     update(deltaTime) {
         let actualSpeed = gameSpeed;
+
         if (this.type !== 'cow') {
-            actualSpeed = gameSpeed * (1 - this.speedMultiplier);
+            if (this.lane >= 2) {
+                // Oncoming traffic (lanes 2, 3) moving very fast towards player
+                actualSpeed = gameSpeed + (gameSpeed * this.speedMultiplier);
+            } else {
+                // Traffic in same direction (lanes 0, 1) moving slower than player
+                actualSpeed = gameSpeed * (1 - this.speedMultiplier);
+            }
         }
         
         this.mesh.position.z += actualSpeed * deltaTime;
@@ -561,7 +579,7 @@ class Collectible {
         this.mesh = new THREE.Group();
         this.box = new THREE.Box3();
 
-        const xPos = (this.lane - 1) * LANE_WIDTH;
+        const xPos = (this.lane - 1.5) * LANE_WIDTH;
 
         if (type === 'coin') {
             const coinMesh = new THREE.Mesh(coinGeo, coinMat);
@@ -713,17 +731,17 @@ function resizeCanvas() {
     renderer.setSize(width, height);
     camera.aspect = width / height;
 
-    // Adjust FOV to ensure lanes are visible on narrow screens (e.g., portrait mobile)
-    const baseAspect = 16 / 9; // Base aspect ratio
-    const baseFov = 60; // Base vertical FOV
+    // Ensure all 4 lanes are completely visible on portrait/mobile screens
+    // By locking the Horizontal FOV when aspect ratio gets narrow
+    const targetHorizontalFov = 90; // Degrees. Wider to ensure all 4 lanes fit horizontally
 
-    if (camera.aspect < baseAspect) {
-        const cameraHeight = Math.tan((baseFov / 2) * (Math.PI / 180));
-        const newCameraHeight = cameraHeight * (baseAspect / camera.aspect);
-        camera.fov = Math.atan(newCameraHeight) * (180 / Math.PI) * 2;
-    } else {
-        camera.fov = baseFov;
-    }
+    // Calculate the necessary vertical FOV to maintain the target horizontal FOV
+    const hFovRad = targetHorizontalFov * (Math.PI / 180);
+    const vFovRad = 2 * Math.atan(Math.tan(hFovRad / 2) / camera.aspect);
+    const calculatedFov = vFovRad * (180 / Math.PI);
+
+    // Use the larger of the base FOV (60) or the calculated FOV
+    camera.fov = Math.max(60, calculatedFov);
 
     camera.updateProjectionMatrix();
 }
@@ -765,18 +783,18 @@ function gameLoop(timestamp) {
 }
 
 function update(deltaTime) {
-    // Update sky color based on game speed
-    // Speed starts at 20. Let's say max sky transition happens around speed 60.
-    const speedRatio = Math.min((gameSpeed - 20) / 40, 1.0);
+    // Update sky color based on score to make it smooth and not jump during speed bursts
+    // Transition day to night over 1000 score
+    const scoreRatio = Math.min(score / 1000, 1.0);
 
     // Day (0x87CEEB), Sunset (0xff7e5f), Night (0x0B1D3A)
-    if (speedRatio < 0.5) {
+    if (scoreRatio < 0.5) {
         // Day to Sunset
-        const t = speedRatio / 0.5;
+        const t = scoreRatio / 0.5;
         skyColor.lerpColors(skyDay, skySunset, t);
     } else {
         // Sunset to Night
-        const t = (speedRatio - 0.5) / 0.5;
+        const t = (scoreRatio - 0.5) / 0.5;
         skyColor.lerpColors(skySunset, skyNight, t);
     }
 
@@ -848,7 +866,7 @@ function update(deltaTime) {
     // Milestone speed burst
     if (score >= nextSpeedMilestone) {
         gameSpeed += 5; // Sudden burst of speed
-        nextSpeedMilestone += 500;
+        nextSpeedMilestone += 100;
         showFloatingText('SPEED UP!', player.mesh.position);
     }
 
@@ -993,7 +1011,7 @@ function startGame() {
     gameState = 'PLAYING';
     score = 0;
     gameSpeed = 20;
-    nextSpeedMilestone = 500;
+    nextSpeedMilestone = 100;
     invincibilityTimer = 0;
     multiplierTimer = 0;
     nearMissContainer.innerHTML = '';
