@@ -555,6 +555,10 @@ class Obstacle {
                 this.mesh.rotation.y = 0;
             } else {
                 // Same direction traffic (lanes 0, 1) - going same way as player. Headlights should point away (-Z).
+                // EXCEPT if it's the rickshaw mesh. The player is a rickshaw too, and its front is at +Z.
+                // If it's a vehicle in lane 0,1, its back should be visible to player.
+                // The headlights are at +Z. So we rotate Math.PI (180 deg) so headlights point at -Z,
+                // meaning the back is at +Z (visible to player).
                 this.mesh.rotation.y = Math.PI;
             }
         }
@@ -571,8 +575,9 @@ class Obstacle {
                 // Oncoming traffic (lanes 2, 3) moving very fast towards player
                 actualSpeed = gameSpeed + (gameSpeed * this.speedMultiplier);
             } else {
-                // Traffic in same direction (lanes 0, 1) moving slower than player
-                actualSpeed = gameSpeed * (1 - this.speedMultiplier);
+                // Traffic in same direction (lanes 0, 1) moving parallel/slower than player
+                // Let's make them move at the same speed as the player so they just appear parallel and not merging into each other
+                actualSpeed = gameSpeed * 1.0;
             }
         }
         
@@ -885,13 +890,33 @@ function update(deltaTime) {
 
     if (obstacleSpawnTimer >= obstacleSpawnInterval) {
         obstacleSpawnTimer = 0;
-        const lane = Math.floor(Math.random() * LANE_COUNT);
-        const rand = Math.random();
-        let type = 'car';
-        if (rand > 0.9) type = 'cow';
-        else if (rand > 0.6) type = 'truck';
         
-        obstacles.push(new Obstacle(lane, type));
+        let lane = Math.floor(Math.random() * LANE_COUNT);
+
+        // Ensure no two vehicles spawn too close to each other in the same lane
+        // Check active obstacles
+        let canSpawn = true;
+        for (let obs of obstacles) {
+            if (obs.active && obs.lane === lane) {
+                // Check distance. If an obstacle in the same lane is still far away (-z is far)
+                if (obs.mesh.position.z < -40) {
+                    canSpawn = false;
+                    break;
+                }
+            }
+        }
+
+        if (canSpawn) {
+            const rand = Math.random();
+            let type = 'car';
+            if (rand > 0.9) type = 'cow';
+            else if (rand > 0.6) type = 'truck';
+
+            obstacles.push(new Obstacle(lane, type));
+        } else {
+            // Try spawning very shortly instead of waiting a full interval
+            obstacleSpawnTimer = obstacleSpawnInterval * 0.8;
+        }
     }
     
     // Update Power-up Timers
