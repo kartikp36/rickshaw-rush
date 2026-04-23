@@ -280,6 +280,10 @@ class Player {
 
         // Position player on road
         this.mesh.position.set(this.targetX, 0, 0);
+
+        // Rotate rickshaw so the back is visible to the player
+        this.mesh.rotation.y = Math.PI;
+
         scene.add(this.mesh);
     }
     
