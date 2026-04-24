@@ -16,7 +16,6 @@ let score = 0;
 let bestScore = localStorage.getItem('rickshawRushBestScore') || 0;
 let lastTime = 0;
 let gameSpeed = 20; // Units per second in 3D
-let nextSpeedMilestone = 100; // Boost speed at 100, 200, 300, etc.
 let animationId = null;
 
 // Power-up States
@@ -939,13 +938,6 @@ function update(deltaTime) {
     }
     score += scoreGain;
 
-    // Milestone speed burst
-    if (score >= nextSpeedMilestone) {
-        gameSpeed += 5; // Sudden burst of speed
-        nextSpeedMilestone += 100;
-        showFloatingText('SPEED UP!', player.mesh.position);
-    }
-
     // Display power-up status if active
     let statusText = `Score: ${Math.floor(score)}`;
     if (invincibilityTimer > 0) {
@@ -1087,7 +1079,6 @@ function startGame() {
     gameState = 'PLAYING';
     score = 0;
     gameSpeed = 20;
-    nextSpeedMilestone = 100;
     invincibilityTimer = 0;
     multiplierTimer = 0;
     nearMissContainer.innerHTML = '';
