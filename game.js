@@ -1098,6 +1098,12 @@ function startGame() {
     collectibles = [];
     collectibleSpawnTimer = 0;
 
+    // Spawn initial line of powerups
+    collectibles.push(new Collectible(0, 'chai'));
+    collectibles.push(new Collectible(1, 'music'));
+    collectibles.push(new Collectible(2, 'chai'));
+    collectibles.push(new Collectible(3, 'music'));
+
     particles.forEach(p => p.destroy());
     particles = [];
     screenShakeTime = 0;
