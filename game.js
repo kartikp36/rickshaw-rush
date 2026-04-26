@@ -33,9 +33,14 @@ scene.background = new THREE.Color(0x87CEEB); // Sky blue
 scene.fog = new THREE.Fog(0x87CEEB, 20, 100);
 
 const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-// Position camera lower and closer to see wheels better
-camera.position.set(0, 5, 10);
-camera.lookAt(0, 1, -20);
+
+// Base camera settings for desktop/landscape
+let cameraBasePos = new THREE.Vector3(0, 5, 10);
+let cameraLookAtPos = new THREE.Vector3(0, 1, -20);
+
+// Apply initial positioning
+camera.position.copy(cameraBasePos);
+camera.lookAt(cameraLookAtPos);
 
 const renderer = new THREE.WebGLRenderer({ canvas: canvas, antialias: true });
 renderer.setSize(window.innerWidth, window.innerHeight);
@@ -816,6 +821,23 @@ function resizeCanvas() {
     // Use the larger of the base FOV (60) or the calculated FOV
     camera.fov = Math.max(60, calculatedFov);
 
+    if (camera.aspect < 1) {
+        // Portrait / Mobile view
+        // Move the camera closer, slightly higher, and look down more to remove empty space at bottom
+        cameraBasePos.set(0, 7, 7);
+        cameraLookAtPos.set(0, 0, -15);
+    } else {
+        // Landscape / Desktop view
+        cameraBasePos.set(0, 5, 10);
+        cameraLookAtPos.set(0, 1, -20);
+    }
+
+    // Note: camera.position will be updated in gameLoop, but we can set it here too if not shaking
+    if (screenShakeTime <= 0) {
+        camera.position.copy(cameraBasePos);
+    }
+    camera.lookAt(cameraLookAtPos);
+
     camera.updateProjectionMatrix();
 }
 window.addEventListener('resize', resizeCanvas);
@@ -839,11 +861,15 @@ function gameLoop(timestamp) {
     if (screenShakeTime > 0) {
         screenShakeTime -= deltaTime;
         const magnitude = 0.5 * screenShakeTime;
-        camera.position.x = (Math.random() - 0.5) * magnitude;
-        camera.position.y = 7 + (Math.random() - 0.5) * magnitude;
+        camera.position.x = cameraBasePos.x + (Math.random() - 0.5) * magnitude;
+        camera.position.y = cameraBasePos.y + (Math.random() - 0.5) * magnitude;
+        // make sure camera keeps looking at the right spot during shake
+        camera.lookAt(cameraLookAtPos);
     } else {
-        camera.position.x = 0;
-        camera.position.y = 7;
+        camera.position.x = cameraBasePos.x;
+        camera.position.y = cameraBasePos.y;
+        camera.position.z = cameraBasePos.z;
+        camera.lookAt(cameraLookAtPos);
     }
 
     if (gameState === 'PLAYING') {
