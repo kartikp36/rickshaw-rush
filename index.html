@@ -11,9 +11,35 @@
     <div id="game-container">
         <canvas id="gameCanvas"></canvas>
         <div id="ui-layer">
-            <div id="start-screen" class="screen">
+            <div id="start-screen" class="screen main-menu">
                 <h1>Rickshaw Rush 3D</h1>
-                <p>Tap to Start</p>
+                <div class="menu-buttons">
+                    <button id="play-btn" class="game-btn">Play</button>
+                    <button id="instructions-btn" class="game-btn">How to Play</button>
+                    <button id="credits-btn" class="game-btn">Credits</button>
+                </div>
+            </div>
+
+            <!-- Modals -->
+            <div id="instructions-modal" class="screen modal hidden">
+                <div class="modal-content">
+                    <h2>How to Play</h2>
+                    <ul>
+                        <li>Swipe Left/Right or use A/D keys to steer.</li>
+                        <li>Avoid cars, trucks, and obstacles!</li>
+                        <li>Survive as long as possible to get a high score.</li>
+                    </ul>
+                    <button id="close-instructions-btn" class="game-btn secondary-btn">Back</button>
+                </div>
+            </div>
+
+            <div id="credits-modal" class="screen modal hidden">
+                <div class="modal-content">
+                    <h2>Credits</h2>
+                    <p>Created by Kartik</p>
+                    <p>Powered by Three.js</p>
+                    <button id="close-credits-btn" class="game-btn secondary-btn">Back</button>
+                </div>
             </div>
             <div id="hud" class="hidden">
                 <div id="score-display">Score: 0</div>
