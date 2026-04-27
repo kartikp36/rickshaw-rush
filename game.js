@@ -10,6 +10,11 @@ const finalScoreDisplay = document.getElementById('final-score');
 const bestScoreDisplay = document.getElementById('best-score');
 const nearMissContainer = document.getElementById('near-miss-container');
 
+// Main Menu Elements
+const playBtn = document.getElementById('play-btn');
+const instructionsBtn = document.getElementById('instructions-btn');
+const instructionsModal = document.getElementById('instructions-modal');
+const closeInstructionsBtn = document.getElementById('close-instructions-btn');
 // Game State
 let gameState = 'START'; // START, PLAYING, GAMEOVER
 let score = 0;
@@ -1139,8 +1144,22 @@ function startGame() {
     animationId = requestAnimationFrame(gameLoop);
 }
 
-startScreen.addEventListener('click', startGame);
-gameOverScreen.addEventListener('click', startGame);
+// Menu Event Listeners
+playBtn.addEventListener('click', startGame);
+
+instructionsBtn.addEventListener('click', () => {
+    instructionsModal.classList.remove('hidden');
+});
+
+closeInstructionsBtn.addEventListener('click', () => {
+    instructionsModal.classList.add('hidden');
+});
+
+// Game Over Event Listener
+gameOverScreen.addEventListener('click', (e) => {
+    // Only restart if the user didn't click inside a modal (though game over has none yet, good practice)
+    startGame();
+});
 
 // Render initial scene
 renderer.render(scene, camera);
