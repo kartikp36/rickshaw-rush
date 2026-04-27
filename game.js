@@ -592,9 +592,8 @@ class Obstacle {
                 // Oncoming traffic (lanes 2, 3) moving very fast towards player
                 actualSpeed = gameSpeed + (gameSpeed * this.speedMultiplier);
             } else {
-                // Traffic in same direction (lanes 0, 1) moving parallel/slower than player
-                // Let's make them move at the same speed as the player so they just appear parallel and not merging into each other
-                actualSpeed = gameSpeed * 1.0;
+                // Traffic in same direction (lanes 0, 1) moving slower than player so player can overtake
+                actualSpeed = gameSpeed - (gameSpeed * this.speedMultiplier);
             }
         }
         
