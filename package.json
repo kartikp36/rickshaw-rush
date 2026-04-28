@@ -4,7 +4,7 @@
   "description": "",
   "main": "game.js",
   "scripts": {
-    "build": "mkdir -p www && cp index.html game.js style.css www/ && mkdir -p www/public && cp public/rickshaw-rush-splash-mobile.png public/rickshaw-rush-splash-desktop.png www/public/ || true",
+    "build": "mkdir -p www && cp index.html game.js style.css www/ && cp -r public www/ && cp -r icons www/ 2>/dev/null || true && cp favicon.ico www/ 2>/dev/null || true",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -23,5 +23,8 @@
     "@capacitor/android": "^8.3.1",
     "@capacitor/cli": "^8.3.1",
     "@capacitor/core": "^8.3.1"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5"
   }
 }
