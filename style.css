@@ -64,15 +64,19 @@ canvas {
 }
 
 .main-menu {
-    background-color: #1a1a2e; /* Solid background for main menu */
-    background-image: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+    background-color: #000;
+    background-image: url('public/rickshaw-rush-splash-desktop.png');
+    background-size: cover;
+    background-position: center;
 }
 
 .screen h1 {
     font-size: 3rem;
     margin-bottom: 20px;
-    color: #f1c40f;
-    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+    color: #2ecc71;
+    text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+    text-transform: uppercase;
+    letter-spacing: 2px;
 }
 
 .screen p {
@@ -91,27 +95,29 @@ canvas {
 }
 
 .game-btn {
-    background: linear-gradient(180deg, #f1c40f 0%, #d35400 100%);
-    border: 3px solid #fff;
+    background-color: #000;
+    border: 3px solid #2ecc71;
     border-radius: 12px;
-    color: white;
+    color: #2ecc71;
     font-size: 1.5rem;
     font-weight: bold;
     padding: 15px 20px;
     cursor: pointer;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
     box-shadow: 0 4px 6px rgba(0,0,0,0.3);
-    transition: transform 0.1s, box-shadow 0.1s;
+    transition: all 0.2s;
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 1px;
 }
 
-.game-btn:active {
+.game-btn:hover, .game-btn:active {
+    background-color: #2ecc71;
+    color: #000;
     transform: scale(0.95);
     box-shadow: 0 2px 3px rgba(0,0,0,0.3);
 }
 
 .secondary-btn {
-    background: linear-gradient(180deg, #3498db 0%, #2980b9 100%);
     font-size: 1.2rem;
     padding: 10px 15px;
     margin-top: 20px;
@@ -123,8 +129,8 @@ canvas {
 }
 
 .modal-content {
-    background-color: #2c3e50;
-    border: 4px solid #f1c40f;
+    background-color: #111;
+    border: 4px solid #2ecc71;
     border-radius: 15px;
     padding: 30px;
     width: 90%;
@@ -136,10 +142,11 @@ canvas {
 }
 
 .modal-content h2 {
-    color: #f1c40f;
+    color: #2ecc71;
     margin-bottom: 20px;
     font-size: 2rem;
     text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+    text-transform: uppercase;
 }
 
 .modal-content ul {
@@ -197,7 +204,7 @@ canvas {
 
 .near-miss-text {
     position: absolute;
-    color: #f1c40f;
+    color: #2ecc71;
     font-size: 1.5rem;
     font-weight: bold;
     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
@@ -217,6 +224,10 @@ canvas {
 
 /* Mobile Responsiveness */
 @media (max-width: 768px) {
+    .main-menu {
+        background-image: url('public/rickshaw-rush-splash-mobile.png');
+    }
+
     .screen h1 {
         font-size: 2rem;
         margin-bottom: 15px;
