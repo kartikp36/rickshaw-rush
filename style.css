@@ -68,6 +68,8 @@ canvas {
     background-image: url('public/rickshaw-rush-splash-desktop.png');
     background-size: cover;
     background-position: center;
+    justify-content: flex-start;
+    padding-top: 15vh;
 }
 
 .screen h1 {
