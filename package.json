@@ -4,7 +4,7 @@
   "description": "",
   "main": "game.js",
   "scripts": {
-    "build": "mkdir -p www && cp index.html game.js style.css www/",
+    "build": "mkdir -p www && cp index.html game.js style.css www/ && cp -r public www/ && cp -r icons www/ && cp favicon.ico www/",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
@@ -23,5 +23,8 @@
     "@capacitor/android": "^8.3.1",
     "@capacitor/cli": "^8.3.1",
     "@capacitor/core": "^8.3.1"
+  },
+  "devDependencies": {
+    "@capacitor/assets": "^3.0.5"
   }
 }
