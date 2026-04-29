@@ -394,6 +394,9 @@ window.addEventListener('keydown', (e) => {
 });
 
 // Radio UI Event Listeners
+document.getElementById('radio-toggle-btn').addEventListener('click', () => {
+    document.getElementById('radio-controls').classList.toggle('hidden');
+});
 document.getElementById('radio-btn-1').addEventListener('click', () => playRadioChannel(1));
 document.getElementById('radio-btn-2').addEventListener('click', () => playRadioChannel(2));
 document.getElementById('radio-btn-3').addEventListener('click', () => playRadioChannel(3));
