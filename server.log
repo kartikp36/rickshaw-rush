@@ -1,0 +1,7 @@
+127.0.0.1 - - [29/Apr/2026 12:08:42] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [29/Apr/2026 12:08:42] "GET /game.js HTTP/1.1" 200 -
+127.0.0.1 - - [29/Apr/2026 12:08:42] "GET /style.css HTTP/1.1" 200 -
+127.0.0.1 - - [29/Apr/2026 12:08:42] "GET /public/rickshaw-rush-splash-desktop.png HTTP/1.1" 200 -
+127.0.0.1 - - [29/Apr/2026 12:08:43] "GET /public/bollywood.mp3 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Apr/2026 12:08:43] "GET /public/desi.mp3 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Apr/2026 12:08:43] "GET /public/english.mp3 HTTP/1.1" 200 -
