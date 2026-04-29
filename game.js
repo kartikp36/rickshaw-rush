@@ -13,16 +13,27 @@ const nearMissContainer = document.getElementById('near-miss-container');
 // Main Menu Elements
 const playBtn = document.getElementById('play-btn');
 const instructionsBtn = document.getElementById('instructions-btn');
+const customizeBtn = document.getElementById('customize-btn');
 const creditsBtn = document.getElementById('credits-btn');
 const instructionsModal = document.getElementById('instructions-modal');
+const customizeModal = document.getElementById('customize-modal');
 const creditsModal = document.getElementById('credits-modal');
 const closeInstructionsBtn = document.getElementById('close-instructions-btn');
+const closeCustomizeBtn = document.getElementById('close-customize-btn');
 const closeCreditsBtn = document.getElementById('close-credits-btn');
+const color1Picker = document.getElementById('color1-picker');
+const color2Picker = document.getElementById('color2-picker');
 
 // Game State
 let gameState = 'START'; // START, PLAYING, GAMEOVER
 let score = 0;
 let bestScore = localStorage.getItem('rickshawRushBestScore') || 0;
+let rickshawColor1 = localStorage.getItem('rickshawColor1') || '#1a1a1a';
+let rickshawColor2 = localStorage.getItem('rickshawColor2') || '#ffd700';
+
+// Set initial color picker values
+color1Picker.value = rickshawColor1;
+color2Picker.value = rickshawColor2;
 let lastTime = 0;
 let gameSpeed = 20; // Units per second in 3D
 let animationId = null;
@@ -152,15 +163,15 @@ class Player {
         this.mesh = new THREE.Group();
         
         // Materials based on reference image
-        const blackMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.8 });
-        const yellowMat = new THREE.MeshStandardMaterial({ color: 0xffd700, roughness: 0.4 });
+        const blackMat = new THREE.MeshStandardMaterial({ color: parseInt(rickshawColor1.replace('#', '0x')), roughness: 0.8 });
+        const yellowMat = new THREE.MeshStandardMaterial({ color: parseInt(rickshawColor2.replace('#', '0x')), roughness: 0.4 });
         const greenMat = new THREE.MeshStandardMaterial({ color: 0x117722, roughness: 0.5 });
         const greyMat = new THREE.MeshStandardMaterial({ color: 0x888888, roughness: 0.5 });
-        const clothMat = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: 0.9 }); // Canvas roof
+        const clothMat = new THREE.MeshStandardMaterial({ color: parseInt(rickshawColor2.replace('#', '0x')), roughness: 0.9 }); // Canvas roof
 
-        // 1. Lower Chassis (Green Base)
+        // 1. Lower Body (Chassis) - Custom Color 1
         const chassisGeo = new THREE.BoxGeometry(this.width * 0.9, 0.4, this.depth * 0.9);
-        const chassis = new THREE.Mesh(chassisGeo, greenMat);
+        const chassis = new THREE.Mesh(chassisGeo, blackMat); // Uses color 1 (Black/Custom1)
         chassis.position.set(0, 0.6, -0.1);
         chassis.castShadow = true;
         this.mesh.add(chassis);
@@ -1156,6 +1167,24 @@ instructionsBtn.addEventListener('click', () => {
 
 closeInstructionsBtn.addEventListener('click', () => {
     instructionsModal.classList.add('hidden');
+});
+
+customizeBtn.addEventListener('click', () => {
+    customizeModal.classList.remove('hidden');
+});
+
+closeCustomizeBtn.addEventListener('click', () => {
+    customizeModal.classList.add('hidden');
+});
+
+color1Picker.addEventListener('change', (e) => {
+    rickshawColor1 = e.target.value;
+    localStorage.setItem('rickshawColor1', rickshawColor1);
+});
+
+color2Picker.addEventListener('change', (e) => {
+    rickshawColor2 = e.target.value;
+    localStorage.setItem('rickshawColor2', rickshawColor2);
 });
 
 creditsBtn.addEventListener('click', () => {
