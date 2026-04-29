@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>Rickshaw Rush 3D</title>
     <link rel="icon" type="image/png" href="public/rickshaw-rush-logo.png" sizes="512x512">
     <link rel="stylesheet" href="style.css">
@@ -17,6 +17,7 @@
                 <div class="menu-buttons">
                     <button id="play-btn" class="game-btn">Play</button>
                     <button id="instructions-btn" class="game-btn">How to Play</button>
+                    <button id="customize-btn" class="game-btn">Customize</button>
                     <button id="credits-btn" class="game-btn">Credits</button>
                 </div>
             </div>
@@ -42,6 +43,22 @@
                     <button id="close-credits-btn" class="game-btn secondary-btn">Back</button>
                 </div>
             </div>
+
+            <div id="customize-modal" class="screen modal hidden">
+                <div class="modal-content">
+                    <h2>Customize</h2>
+                    <div class="color-picker-group">
+                        <label for="color1-picker">Color 1 (Body):</label>
+                        <input type="color" id="color1-picker" value="#1a1a1a">
+                    </div>
+                    <div class="color-picker-group">
+                        <label for="color2-picker">Color 2 (Roof):</label>
+                        <input type="color" id="color2-picker" value="#ffd700">
+                    </div>
+                    <button id="close-customize-btn" class="game-btn secondary-btn">Back</button>
+                </div>
+            </div>
+
             <div id="hud" class="hidden">
                 <div id="score-display">Score: 0</div>
 
