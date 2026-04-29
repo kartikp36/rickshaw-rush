@@ -179,7 +179,7 @@ canvas {
     left: 20px;
     right: 20px;
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     pointer-events: none;
     z-index: 5;
 }
@@ -189,6 +189,53 @@ canvas {
     font-weight: bold;
     color: white;
     text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+}
+
+/* Radio UI */
+#radio-container {
+    pointer-events: auto; /* Enable clicking */
+    background: rgba(0, 0, 0, 0.6);
+    padding: 10px;
+    border-radius: 8px;
+    border: 2px solid #2ecc71;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.radio-title {
+    color: #2ecc71;
+    font-weight: bold;
+    margin-bottom: 5px;
+    font-size: 1.2rem;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.8);
+}
+
+.radio-controls {
+    display: flex;
+    gap: 5px;
+}
+
+.radio-btn {
+    background: #111;
+    color: white;
+    border: 1px solid #2ecc71;
+    padding: 5px 8px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    font-weight: bold;
+    transition: all 0.2s;
+}
+
+.radio-btn:hover {
+    background: #2ecc71;
+    color: #000;
+}
+
+.radio-btn.active {
+    background: #2ecc71;
+    color: #000;
 }
 
 /* Near miss text overlay */
@@ -244,5 +291,18 @@ canvas {
 
     .near-miss-text {
         font-size: 1.2rem;
+    }
+
+    #radio-container {
+        padding: 5px;
+    }
+
+    .radio-title {
+        font-size: 1rem;
+    }
+
+    .radio-btn {
+        padding: 4px 6px;
+        font-size: 0.8rem;
     }
 }

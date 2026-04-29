@@ -136,6 +136,53 @@ function playHonkSound() {}
 function playCrashSound() {}
 function playScoreSound() {}
 
+// Radio Logic
+const radioChannels = {
+    1: new Audio('public/desi.mp3'),
+    2: new Audio('public/bollywood.mp3'),
+    3: new Audio('public/english.mp3')
+};
+
+// Set up looping for all channels
+for (let key in radioChannels) {
+    radioChannels[key].loop = true;
+}
+
+let currentRadioChannel = 0; // 0 means off
+
+function updateRadioUI() {
+    document.querySelectorAll('.radio-btn').forEach(btn => btn.classList.remove('active'));
+    document.getElementById(`radio-btn-${currentRadioChannel}`).classList.add('active');
+}
+
+function playRadioChannel(channelNumber) {
+    // Stop current
+    if (currentRadioChannel !== 0 && radioChannels[currentRadioChannel]) {
+        radioChannels[currentRadioChannel].pause();
+    }
+
+    currentRadioChannel = channelNumber;
+
+    // Play new
+    if (currentRadioChannel !== 0 && radioChannels[currentRadioChannel]) {
+        radioChannels[currentRadioChannel].play().catch(e => console.log("Audio play failed, waiting for user interaction:", e));
+    }
+
+    updateRadioUI();
+}
+
+function pauseRadio() {
+    if (currentRadioChannel !== 0 && radioChannels[currentRadioChannel]) {
+        radioChannels[currentRadioChannel].pause();
+    }
+}
+
+function resumeRadio() {
+    if (currentRadioChannel !== 0 && radioChannels[currentRadioChannel]) {
+        radioChannels[currentRadioChannel].play().catch(e => console.log("Audio play failed, waiting for user interaction:", e));
+    }
+}
+
 // Player Class (Rickshaw 3D)
 class Player {
     constructor() {
@@ -341,8 +388,16 @@ window.addEventListener('keydown', (e) => {
         player.move(-1);
     } else if (e.key === 'ArrowRight' || e.key === 'd') {
         player.move(1);
+    } else if (['0', '1', '2', '3'].includes(e.key)) {
+        playRadioChannel(parseInt(e.key));
     }
 });
+
+// Radio UI Event Listeners
+document.getElementById('radio-btn-1').addEventListener('click', () => playRadioChannel(1));
+document.getElementById('radio-btn-2').addEventListener('click', () => playRadioChannel(2));
+document.getElementById('radio-btn-3').addEventListener('click', () => playRadioChannel(3));
+document.getElementById('radio-btn-0').addEventListener('click', () => playRadioChannel(0));
 
 canvas.addEventListener('touchstart', (e) => {
     if (gameState !== 'PLAYING' || !player) return;
@@ -1096,6 +1151,8 @@ function showNearMissText() {
 function gameOver() {
     gameState = 'GAMEOVER';
 
+    pauseRadio(); // Pause radio on game over
+
     const finalScore = Math.floor(score);
     if (finalScore > bestScore) {
         bestScore = finalScore;
@@ -1110,6 +1167,14 @@ function gameOver() {
 
 function startGame() {
     initAudio();
+
+    // Start or resume radio
+    if (currentRadioChannel === 0) {
+        playRadioChannel(1); // Default to channel 1 on start if off
+    } else {
+        resumeRadio();
+    }
+
     gameState = 'PLAYING';
     score = 0;
     gameSpeed = 20;

@@ -1,2 +1,14 @@
-127.0.0.1 - - [27/Apr/2026 20:20:06] "GET / HTTP/1.1" 200 -
-127.0.0.1 - - [27/Apr/2026 20:22:56] "GET /favicon.ico HTTP/1.1" 200 -
+127.0.0.1 - - [29/Apr/2026 11:46:15] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [29/Apr/2026 11:46:15] "GET /game.js HTTP/1.1" 200 -
+127.0.0.1 - - [29/Apr/2026 11:46:15] "GET /style.css HTTP/1.1" 200 -
+127.0.0.1 - - [29/Apr/2026 11:46:16] "GET /public/rickshaw-rush-splash-desktop.png HTTP/1.1" 200 -
+127.0.0.1 - - [29/Apr/2026 11:46:17] "GET /public/desi.mp3 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Apr/2026 11:46:17] "GET /public/bollywood.mp3 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Apr/2026 11:46:17] "GET /public/english.mp3 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Apr/2026 11:46:41] "GET / HTTP/1.1" 200 -
+127.0.0.1 - - [29/Apr/2026 11:46:41] "GET /game.js HTTP/1.1" 200 -
+127.0.0.1 - - [29/Apr/2026 11:46:41] "GET /style.css HTTP/1.1" 200 -
+127.0.0.1 - - [29/Apr/2026 11:46:41] "GET /public/rickshaw-rush-splash-desktop.png HTTP/1.1" 200 -
+127.0.0.1 - - [29/Apr/2026 11:46:42] "GET /public/bollywood.mp3 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Apr/2026 11:46:42] "GET /public/desi.mp3 HTTP/1.1" 200 -
+127.0.0.1 - - [29/Apr/2026 11:46:42] "GET /public/english.mp3 HTTP/1.1" 200 -
