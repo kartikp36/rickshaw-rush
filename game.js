@@ -621,6 +621,13 @@ class Obstacle {
     destroy() {
         scene.remove(this.mesh);
     }
+
+    getColors() {
+        if (this.type === 'car') return [0xe74c3c, 0x333333]; // Red and Dark Grey
+        if (this.type === 'truck') return [0x2c3e50, 0x3498db]; // Dark Blue and Light Blue
+        if (this.type === 'cow') return [0xecf0f1, 0x111111]; // White and Black
+        return [0xe74c3c, 0xf1c40f]; // fallback Red and Yellow
+    }
 }
 
 let obstacles = [];
@@ -810,10 +817,10 @@ class Particle {
     }
 }
 
-function spawnExplosion(x, y, z) {
+function spawnExplosion(x, y, z, color1 = 0xe74c3c, color2 = 0xf1c40f) {
     for (let i = 0; i < 20; i++) {
-        particles.push(new Particle(x, y, z, 0xe74c3c)); // Red
-        particles.push(new Particle(x, y, z, 0xf1c40f)); // Yellow
+        particles.push(new Particle(x, y, z, color1));
+        particles.push(new Particle(x, y, z, color2));
     }
 }
 
@@ -1031,16 +1038,17 @@ function update(deltaTime) {
         
         // Collision Detection using Three.js Box3
         if (player.box.intersectsBox(obs.box)) {
+            const obsColors = obs.getColors();
             if (invincibilityTimer > 0) {
                 // Smashed obstacle!
-                spawnExplosion(obs.mesh.position.x, obs.mesh.position.y + 1, obs.mesh.position.z);
+                spawnExplosion(obs.mesh.position.x, obs.mesh.position.y + 1, obs.mesh.position.z, obsColors[0], obsColors[1]);
                 obs.active = false;
                 score += 500;
                 showFloatingText('SMASH!', obs.mesh.position);
             } else {
                 // Collision!
                 playCrashSound();
-                spawnExplosion(player.mesh.position.x, player.mesh.position.y + 1, player.mesh.position.z);
+                spawnExplosion(player.mesh.position.x, player.mesh.position.y + 1, player.mesh.position.z, obsColors[0], obsColors[1]);
                 screenShakeTime = 0.5;
                 gameOver();
                 return;
